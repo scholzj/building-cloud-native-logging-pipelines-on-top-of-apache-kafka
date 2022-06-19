@@ -1,0 +1,22 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: s3-connector
+  labels:
+    strimzi.io/cluster: my-connect
+spec:
+  class: CamelAws2s3SinkConnector
+  tasksMax: 1
+  config:
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.storage.StringConverter
+    topics: logs
+    camel.sink.path.bucketNameOrArn: fluent-bit-logs-bucket
+    camel.sink.endpoint.keyName: ${date:now:yyyyMMdd-HHmmssSSS}-${exchangeId}
+    # Camel aggregator settings
+    camel.beans.aggregate: '#class:org.apache.camel.kafkaconnector.aggregator.StringAggregator'
+    camel.aggregation.size: 1000
+    camel.aggregation.timeout: 5000
+    camel.component.aws2-s3.accessKey: ${env:AWS_ACCESS_KEY}
+    camel.component.aws2-s3.secretKey: ${env:AWS_SECRET_KEY}
+    camel.component.aws2-s3.region: ${env:AWS_REGION}

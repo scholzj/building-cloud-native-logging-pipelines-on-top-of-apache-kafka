@@ -1,0 +1,18 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: elasticsearch-connector
+  labels:
+    strimzi.io/cluster: my-connect
+spec:
+  class: CamelElasticsearchrestSinkConnector
+  tasksMax: 1
+  config:
+    camel.sink.endpoint.hostAddresses: 'elasticsearch:9200'
+    camel.sink.endpoint.indexName: logs
+    camel.sink.endpoint.operation: Index
+    camel.sink.path.clusterName: elasticsearch
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.storage.StringConverter
+    topics: logs
+    

@@ -1,0 +1,17 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnector
+metadata:
+  name: slack-connector
+  labels:
+    strimzi.io/cluster: my-connect
+spec:
+  class: CamelSlackSinkConnector
+  tasksMax: 1
+  config:
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.storage.StringConverter
+    topics: alerts
+    camel.sink.path.channel: '#jakub-alerts'
+    camel.sink.endpoint.iconEmoji: ':kafka:'
+    camel.sink.endpoint.username: Log Alerts
+    camel.sink.endpoint.webhookUrl: ${env:SLACK_WEBHOOK_URL}
