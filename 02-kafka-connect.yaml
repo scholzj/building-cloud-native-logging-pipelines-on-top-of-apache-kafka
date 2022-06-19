@@ -1,0 +1,431 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: my-connect
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  authentication:
+    type: tls
+  authorization:
+    type: simple
+    acls:
+      # Kafka Connects internal topics
+      - resource:
+          type: group
+          name: connect-cluster
+        operation: Read
+      - resource:
+          type: topic
+          name: connect-cluster-configs
+        operation: Read
+      - resource:
+          type: topic
+          name: connect-cluster-configs
+        operation: Describe
+      - resource:
+          type: topic
+          name: connect-cluster-configs
+        operation: Write
+      - resource:
+          type: topic
+          name: connect-cluster-configs
+        operation: Describe
+      - resource:
+          type: topic
+          name: connect-cluster-configs
+        operation: Create
+      - resource:
+          type: topic
+          name: connect-cluster-status
+        operation: Read
+      - resource:
+          type: topic
+          name: connect-cluster-status
+        operation: Describe
+      - resource:
+          type: topic
+          name: connect-cluster-status
+        operation: Write
+      - resource:
+          type: topic
+          name: connect-cluster-status
+        operation: Describe
+      - resource:
+          type: topic
+          name: connect-cluster-status
+        operation: Create
+      - resource:
+          type: topic
+          name: connect-cluster-offsets
+        operation: Read
+      - resource:
+          type: topic
+          name: connect-cluster-offsets
+        operation: Describe
+      - resource:
+          type: topic
+          name: connect-cluster-offsets
+        operation: Write
+      - resource:
+          type: topic
+          name: connect-cluster-offsets
+        operation: Describe
+      - resource:
+          type: topic
+          name: connect-cluster-offsets
+        operation: Create
+      # Connector topics: ElasticSearch Sink
+      - resource:
+          type: topic
+          name: fluent-bit-logs
+        operation: Describe
+      - resource:
+          type: topic
+          name: fluent-bit-logs
+        operation: Read
+      - resource:
+          type: group
+          name: connect-elasticsearch-connector
+        operation: Read
+      # Connector topics: S3 Sink
+      - resource:
+          type: topic
+          name: fluent-bit-logs
+        operation: Describe
+      - resource:
+          type: topic
+          name: fluent-bit-logs
+        operation: Read
+      - resource:
+          type: group
+          name: connect-s3-connector
+        operation: Read
+      # Connector topics: slack sink
+      - resource:
+          type: topic
+          name: logging-alerts
+        operation: Read
+      - resource:
+          type: topic
+          name: logging-alerts
+        operation: Describe
+      - resource:
+          type: group
+          name: connect-slack-connector
+        operation: Read
+---
+
+#######################################################################################################
+# Uncomment the secret and update it with your own AWS credentials which allow writting to an S3 bucket
+#######################################################################################################
+
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: aws-credentials
+# type: Opaque
+# data:
+#   aws.access-key: Cg==
+#   aws.secret-key: Cg==
+#   aws.region: us-east-1
+---
+
+###################################################################################
+# Uncomment the secret and update it with your own container repository credentials
+###################################################################################
+
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: docker-credentials
+# type: kubernetes.io/dockerconfigjson
+# data:
+#   .dockerconfigjson: Cg==
+---
+
+####################################################################################
+# Uncomment the secret and update it with your own URL for publishing Slack messages
+####################################################################################
+
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: slack-credentials
+# type: Opaque
+# data:
+#   webhookUrl: Cg==
+---
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaConnect
+metadata:
+  name: my-connect
+  labels:
+    app: my-connect
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  replicas: 1
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+  bootstrapServers: my-cluster-kafka-bootstrap:9093
+  config:
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.storage.StringConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+    config.providers: env
+    config.providers.env.class: io.strimzi.kafka.EnvVarConfigProvider
+  tls:
+    trustedCertificates:
+      - secretName: my-cluster-cluster-ca-cert
+        certificate: ca.crt
+  authentication:
+    type: tls
+    certificateAndKey:
+      secretName: my-connect
+      certificate: user.crt
+      key: user.key
+  metricsConfig:
+    type: jmxPrometheusExporter
+    valueFrom:
+      configMapKeyRef:
+        name: connect-metrics
+        key: connect-metrics.yaml
+  build:
+    output:
+      type: docker
+      # Update to match your own container repository
+      image: quay.io/scholzj/kafka-connect-build:logging-pipelines
+      pushSecret: docker-credentials
+    # Uncomment if you want to push the container image to the OpenShift built-in registry
+    # If you use other namespace than myproject, you will also need to fix the name
+    # output:
+    #  type: docker
+    #  image: image-registry.openshift-image-registry.svc:5000/myproject/kafka-connect-build:latest
+    plugins:
+      - name: camel-elasticsearch
+        artifacts:
+          - type: tgz
+            url: https://repo.maven.apache.org/maven2/org/apache/camel/kafkaconnector/camel-elasticsearch-rest-kafka-connector/0.11.5/camel-elasticsearch-rest-kafka-connector-0.11.5-package.tar.gz
+            sha512sum: edff772da41f3c5a007cf97477d31eeb2e3c6ae4bef728da0b5a9c768de47d2e4c55cd7eeb5b8af3a94917a14e1a0821e05cafedf3d9e65cea67e4a4d9ded133
+          - type: jar
+            url: https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.17.2/log4j-api-2.17.2.jar
+            sha512sum: 8f986171ee6ca94ba8eacfc83b5b45bb87221c176076eb152715fcb4e1f351c4e9f88d56420fc02ee166ebe0b896fb52eda21355dec49302ab3e83a56b245d04
+      - name: camel-slack
+        artifacts:
+          - type: tgz
+            url: https://repo.maven.apache.org/maven2/org/apache/camel/kafkaconnector/camel-slack-kafka-connector/0.11.5/camel-slack-kafka-connector-0.11.5-package.tar.gz
+            sha512sum: d4a1c92182844eb89a3aa0ce4ae08346b69d3957c68e1f520130ed316cf5ab9c155f768c686d4be6beb1016e28777430edae853f5cb12adb6e5bf44008b33bae
+      - name: camel-aws2-s3
+        artifacts:
+            - type: tgz
+              url: https://repo.maven.apache.org/maven2/org/apache/camel/kafkaconnector/camel-aws2-s3-kafka-connector/0.11.5/camel-aws2-s3-kafka-connector-0.11.5-package.tar.gz
+              sha512sum: 5103ef8863d141a68321fd561e7276927a87912d6bc61d058d948684ff0c1a726ae8ebebb8e3b463ee11234423440045435264f9dcdf5aae68446e65f603928e
+  externalConfiguration:
+    env:
+      - name: AWS_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: aws-credentials
+            key: aws.access-key
+      - name: AWS_SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            name: aws-credentials
+            key: aws.secret-key
+      - name: AWS_REGION
+        valueFrom:
+          secretKeyRef:
+            name: aws-credentials
+            key: aws.region
+      - name: SLACK_WEBHOOK_URL
+        valueFrom:
+          secretKeyRef:
+            name: slack-credentials
+            key: webhookUrl
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: connect-metrics
+  labels:
+    app: my-cluster
+data:
+  connect-metrics.yaml: |
+    # Inspired by kafka-connect rules
+    # https://github.com/prometheus/jmx_exporter/blob/master/example_configs/kafka-connect.yml
+    # See https://github.com/prometheus/jmx_exporter for more info about JMX Prometheus Exporter metrics
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    rules:
+    #kafka.connect:type=app-info,client-id="{clientid}"
+    #kafka.consumer:type=app-info,client-id="{clientid}"
+    #kafka.producer:type=app-info,client-id="{clientid}"
+    - pattern: 'kafka.(.+)<type=app-info, client-id=(.+)><>start-time-ms'
+      name: kafka_$1_start_time_seconds
+      labels:
+        clientId: "$2"
+      help: "Kafka $1 JMX metric start time seconds"
+      type: GAUGE
+      valueFactor: 0.001
+    - pattern: 'kafka.(.+)<type=app-info, client-id=(.+)><>(commit-id|version): (.+)'
+      name: kafka_$1_$3_info
+      value: 1
+      labels:
+        clientId: "$2"
+        $3: "$4"
+      help: "Kafka $1 JMX metric info version and commit-id"
+      type: GAUGE
+
+    #kafka.producer:type=producer-topic-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
+    #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
+    - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), topic=(.+), partition=(.+)><>(.+-total|compression-rate|.+-avg|.+-replica|.+-lag|.+-lead)
+      name: kafka_$2_$6
+      labels:
+        clientId: "$3"
+        topic: "$4"
+        partition: "$5"
+      help: "Kafka $1 JMX metric type $2"
+      type: GAUGE
+
+    #kafka.producer:type=producer-topic-metrics,client-id="{clientid}",topic="{topic}"
+    #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
+    - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), topic=(.+)><>(.+-total|compression-rate|.+-avg)
+      name: kafka_$2_$5
+      labels:
+        clientId: "$3"
+        topic: "$4"
+      help: "Kafka $1 JMX metric type $2"
+      type: GAUGE
+
+    #kafka.connect:type=connect-node-metrics,client-id="{clientid}",node-id="{nodeid}"
+    #kafka.consumer:type=consumer-node-metrics,client-id=consumer-1,node-id="{nodeid}"
+    - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), node-id=(.+)><>(.+-total|.+-avg)
+      name: kafka_$2_$5
+      labels:
+        clientId: "$3"
+        nodeId: "$4"
+      help: "Kafka $1 JMX metric type $2"
+      type: UNTYPED
+
+    #kafka.connect:type=kafka-metrics-count,client-id="{clientid}"
+    #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}"
+    #kafka.consumer:type=consumer-coordinator-metrics,client-id="{clientid}"
+    #kafka.consumer:type=consumer-metrics,client-id="{clientid}"
+    - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.*)><>(.+-total|.+-avg|.+-bytes|.+-count|.+-ratio|.+-age|.+-flight|.+-threads|.+-connectors|.+-tasks|.+-ago)
+      name: kafka_$2_$4
+      labels:
+        clientId: "$3"
+      help: "Kafka $1 JMX metric type $2"
+      type: GAUGE
+
+    #kafka.connect:type=connector-metrics,connector="{connector}"
+    - pattern: 'kafka.(.+)<type=connector-metrics, connector=(.+)><>(connector-class|connector-type|connector-version|status): (.+)'
+      name: kafka_connect_connector_$3
+      value: 1
+      labels:
+        connector: "$2"
+        $3: "$4"
+      help: "Kafka Connect $3 JMX metric type connector"
+      type: GAUGE
+
+    #kafka.connect:type=connector-task-metrics,connector="{connector}",task="{task}<> status"
+    - pattern: 'kafka.connect<type=connector-task-metrics, connector=(.+), task=(.+)><>status: ([a-z-]+)'
+      name: kafka_connect_connector_task_status
+      value: 1
+      labels:
+        connector: "$1"
+        task: "$2"
+        status: "$3"
+      help: "Kafka Connect JMX Connector task status"
+      type: GAUGE
+
+    #kafka.connect:type=task-error-metrics,connector="{connector}",task="{task}"
+    #kafka.connect:type=source-task-metrics,connector="{connector}",task="{task}"
+    #kafka.connect:type=sink-task-metrics,connector="{connector}",task="{task}"
+    #kafka.connect:type=connector-task-metrics,connector="{connector}",task="{task}"
+    - pattern: kafka.connect<type=(.+)-metrics, connector=(.+), task=(.+)><>(.+-total|.+-count|.+-ms|.+-ratio|.+-avg|.+-failures|.+-requests|.+-timestamp|.+-logged|.+-errors|.+-retries|.+-skipped)
+      name: kafka_connect_$1_$4
+      labels:
+        connector: "$2"
+        task: "$3"
+      help: "Kafka Connect JMX metric type $1"
+      type: GAUGE
+
+    #kafka.connect:type=connector-metrics,connector="{connector}"
+    #kafka.connect:type=connect-worker-metrics,connector="{connector}"
+    - pattern: kafka.connect<type=connect-worker-metrics, connector=(.+)><>([a-z-]+)
+      name: kafka_connect_worker_$2
+      labels:
+        connector: "$1"
+      help: "Kafka Connect JMX metric $1"
+      type: GAUGE
+
+    #kafka.connect:type=connect-worker-metrics
+    - pattern: kafka.connect<type=connect-worker-metrics><>([a-z-]+)
+      name: kafka_connect_worker_$1
+      help: "Kafka Connect JMX metric worker"
+      type: GAUGE
+
+    #kafka.connect:type=connect-worker-rebalance-metrics
+    - pattern: kafka.connect<type=connect-worker-rebalance-metrics><>([a-z-]+)
+      name: kafka_connect_worker_rebalance_$1
+      help: "Kafka Connect JMX metric rebalance information"
+      type: GAUGE
+
+
+
+
+apiVersion: kafka.strimzi.io/v1alpha1
+kind: KafkaConnect
+metadata:
+  name: my-connect
+  labels:
+    app: my-connect
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  replicas: 1
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+  bootstrapServers: my-cluster-kafka-bootstrap:9093
+  config:
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.storage.StringConverter
+    key.converter.schemas.enable: false
+    value.converter.schemas.enable: false
+    config.providers: file
+    config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
+  externalConfiguration:
+    volumes:
+      - name: aws-credentials
+        secret:
+          secretName: aws-credentials
+      - name: slack-credentials
+        secret:
+          secretName: slack-credentials
+  # rack:
+  #   topologyKey: kubernetes.io/hostname
+  tls:
+    trustedCertificates:
+      - secretName: my-cluster-cluster-ca-cert
+        certificate: ca.crt
+  authentication:
+    type: tls
+    certificateAndKey:
+      secretName: my-connect
+      certificate: user.crt
+      key: user.key

@@ -1,4 +1,4 @@
-00-credentials/
+00-credentials.yaml
 unused/
 ca.crt
 user.crt
