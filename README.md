@@ -13,7 +13,7 @@ The slides can be found in [Google Docs](https://docs.google.com/presentation/d/
 1) Install the Strimzi operator.
    The demo is currently using Strimzi 0.29.0, but it should work also with newer versions.
    If needed, follow the documentation at [https://strimzi.io](https://strimzi.io).
-   The namespace used during the demo us `myproject`, but you should be of course able to choose your own.
+   The namespace used during the demo us `myproject` - you can choose your own, but you will need to update the YAML files to match your namespace.
 
 2) Create a Kubernetes Secret with credentials for your container registry.
    It should be secret of type `kubernetes.io/dockerconfigjson` and contain credentials to some Container registry account which will be used for the Kafka Connect build.
