@@ -15,8 +15,8 @@ spec:
     camel.sink.endpoint.keyName: ${date:now:yyyyMMdd-HHmmssSSS}-${exchangeId}
     # Camel aggregator settings
     camel.beans.aggregate: '#class:org.apache.camel.kafkaconnector.aggregator.StringAggregator'
-    camel.aggregation.size: 1000
-    camel.aggregation.timeout: 5000
+    camel.aggregation.size: 10000
+    camel.aggregation.timeout: 60000
     camel.component.aws2-s3.accessKey: ${env:AWS_ACCESS_KEY}
     camel.component.aws2-s3.secretKey: ${env:AWS_SECRET_KEY}
     camel.component.aws2-s3.region: ${env:AWS_REGION}

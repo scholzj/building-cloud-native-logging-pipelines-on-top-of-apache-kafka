@@ -61,7 +61,7 @@ spec:
     spec:
       containers:
         - name: alerting
-          image: ghcr.io/scholzj/building-cloud-native-logging-pipelines-on-top-of-apache-kafka:alerting
+          image: ghcr.io/scholzj/building-cloud-native-logging-pipelines-alerting:latest
           env:
             - name: QUARKUS_KAFKA_STREAMS_BOOTSTRAP_SERVERS
               value: my-cluster-kafka-bootstrap:9093

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: test-app
-          image: ghcr.io/scholzj/building-cloud-native-logging-pipelines-on-top-of-apache-kafka:test-app
+          image: ghcr.io/scholzj/building-cloud-native-logging-pipelines-test-app:latest
           ports:
             - containerPort: 8080
 ---
