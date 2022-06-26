@@ -30,7 +30,6 @@ public class TopologyProducer {
 
     @Produces
     public Topology buildTopology() {
-
         final StreamsBuilder builder = new StreamsBuilder();
 
         builder.stream(SOURCE_TOPIC, Consumed.with(Serdes.String(), LOG_RECORD_SERDE))
