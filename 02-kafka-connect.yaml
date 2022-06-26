@@ -78,11 +78,11 @@ spec:
       # Connector topics: ElasticSearch Sink
       - resource:
           type: topic
-          name: fluent-bit-logs
+          name: logs
         operation: Describe
       - resource:
           type: topic
-          name: fluent-bit-logs
+          name: logs
         operation: Read
       - resource:
           type: group
@@ -91,11 +91,11 @@ spec:
       # Connector topics: S3 Sink
       - resource:
           type: topic
-          name: fluent-bit-logs
+          name: logs
         operation: Describe
       - resource:
           type: topic
-          name: fluent-bit-logs
+          name: logs
         operation: Read
       - resource:
           type: group
@@ -104,11 +104,11 @@ spec:
       # Connector topics: slack sink
       - resource:
           type: topic
-          name: logging-alerts
+          name: alerts
         operation: Read
       - resource:
           type: topic
-          name: logging-alerts
+          name: alerts
         operation: Describe
       - resource:
           type: group
