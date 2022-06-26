@@ -6,7 +6,7 @@ metadata:
     strimzi.io/cluster: my-connect
 spec:
   class: CamelElasticsearchrestSinkConnector
-  tasksMax: 1
+  tasksMax: 3
   config:
     camel.sink.endpoint.hostAddresses: 'elasticsearch:9200'
     camel.sink.endpoint.indexName: logs
