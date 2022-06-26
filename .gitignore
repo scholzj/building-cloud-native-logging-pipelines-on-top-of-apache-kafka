@@ -1,8 +1,5 @@
 00-credentials.yaml
-unused/
-ca.crt
-user.crt
-user.key
+00-kube-setup
 
 #Maven
 **/target/
