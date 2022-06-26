@@ -18,7 +18,7 @@ spec:
       -Xms: 1024m
       -Xmx: 1024m
     listeners:
-      # Unsecure interface => might be needed for demo debugging ;-)
+      # Unsecure interface => used during the demo for debugging ;-)
       - name: anonymous
         port: 9092
         type: internal
@@ -29,16 +29,10 @@ spec:
         tls: true
         authentication:
           type: tls
-      - name: external
-        port: 9094
-        type: loadbalancer
-        tls: true
-        authentication:
-          type: tls
     authorization:
       type: simple
       superUsers:
-        # Unsecure => might be needed for demo debugging ;-)
+        # Unsecure => used during the demo for debugging ;-)
         - ANONYMOUS
     config:
       auto.create.topics.enable: "false"

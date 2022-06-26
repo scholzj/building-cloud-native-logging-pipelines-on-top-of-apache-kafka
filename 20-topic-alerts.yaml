@@ -8,6 +8,6 @@ spec:
   partitions: 3
   replicas: 3
   config:
-    retention.ms: 2629800000
+    retention.ms: 107374182
     segment.bytes: 107374182
     min.insync.replicas: 2
