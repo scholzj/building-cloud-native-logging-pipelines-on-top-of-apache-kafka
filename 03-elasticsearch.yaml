@@ -24,7 +24,7 @@ spec:
 # spec:
 #   ingressClassName: nginx
 #   rules:
-#   - host: elasticsearch.p1
+#   - host: elasticsearch.j9z.cz
 #     http:
 #       paths:
 #       - backend:

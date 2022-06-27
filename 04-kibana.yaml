@@ -20,7 +20,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: kibana.p1
+  - host: kibana.j9z.cz
     http:
       paths:
       - backend:
