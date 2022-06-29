@@ -11,6 +11,6 @@ spec:
     key.converter: org.apache.kafka.connect.storage.StringConverter
     value.converter: org.apache.kafka.connect.storage.StringConverter
     topics: alerts
-    camel.sink.path.channel: '#jakub-alerts'
+    camel.sink.path.channel: '#kcd-berlin-2022'
     camel.sink.endpoint.username: Log Alerts
     camel.sink.endpoint.webhookUrl: ${env:SLACK_WEBHOOK_URL}
